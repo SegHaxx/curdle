@@ -1,0 +1,21 @@
+CFLAGS=-za99 -oahnxs -ei -zp8 -0 -oe=1000
+CC=wcl
+
+src = $(wildcard *.c)
+obj = $(src:.c=.o)
+
+TARGETS=curdle.exe
+
+.PHONY: all clean
+all: $(TARGETS)
+clean:
+	rm -f $(TARGETS) $(obj)
+
+curdle.exe: curdle.c wordlist.h
+	$(CC) $(CFLAGS) -mc -zt10000 $< -fe=$@
+
+curdle.img: curdle.exe
+	rm $@
+	mkdosfs -n CURDLE -C $@ 360
+	upx --best --8086 $<
+	mcopy -v -m -i $@ $^ ::/

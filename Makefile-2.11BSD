@@ -1,0 +1,21 @@
+PREFIX=pdp11-dec-bsd2.11
+CC=$(PREFIX)-gcc
+
+CFLAGS=-std=gnu99 -Wall -Os -Wno-array-bounds -Wno-misleading-indentation
+
+TARGETS=curdle-2.11BSD
+
+src = $(wildcard *.c)
+obj = $(src:.c=.o)
+
+.PHONY: all clean
+all: $(TARGETS)
+clean:
+	rm -f $(TARGETS) $(obj)
+
+curdle-2.11BSD: curdle.c
+	$(CC) $(CFLAGS) $^ -o $@
+	$(PREFIX)-objdump -drwC $@ > $@.s
+	$(PREFIX)-strip -s $@
+	$(PREFIX)-size $@
+	@du -b $@
