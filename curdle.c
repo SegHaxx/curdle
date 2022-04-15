@@ -25,9 +25,9 @@ static void curd_unpack(const unsigned char* curd,char* word){
 static void word_print(char* p){for(int i=0;i<5;++i)printc(p[i]);}
 
 SHL void curdlist_print(){
-	for(int i=0;i<curdlist_count;++i){
-		//word_print(&curdlist[i*5L]);print(NL);
-		}}
+	for(int i=0;i<curdlist_count;++i){unsigned char curd[3];
+		curd[0]=curdlist0[i];curd[1]=curdlist1[i];curd[2]=curdlist2[i];
+		char word[5];curd_unpack(curd,word);word_print(word);print(NL);}}
 
 static int curd_compare(unsigned char* a,unsigned char* b){
 	if(a[0]!=b[0]) return 1;if(a[1]!=b[1]) return 1;
@@ -36,14 +36,19 @@ static int curd_compare(unsigned char* a,unsigned char* b){
 static int curdlist_search(char* guess){
 	unsigned char pguess[3];curd_pack(guess,pguess);
 	for(int i=0;i<curdlist_count;++i){
-		if(!curd_compare(pguess,&curdlist[i*3L])) return 1;}
+		unsigned char curd[3];
+		curd[0]=curdlist0[i];
+		curd[1]=curdlist1[i];
+		curd[2]=curdlist2[i];
+		if(!curd_compare(pguess,curd)) return 1;}
 	return 0;}
 
 static void curd_pick(char* word){
-	uint32_t n=rng_xor128(curdlist_count);//n=5847;
-	curd_unpack(&curdlist[n*3L],word);
-	word_print(word);printc(' ');
-	print_u32(n);print(NL NL);}
+	uint32_t n=rng_xor128(curdlist_count);unsigned char curd[3];
+	curd[0]=curdlist0[n];curd[1]=curdlist1[n];curd[2]=curdlist2[n];
+	curd_unpack(curd,word);
+	print(NL);word_print(word);printc(' ');print_u32(n);print(NL);
+}
 
 static void do_wordle(){char s[5];curd_pick(s);
 	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';
