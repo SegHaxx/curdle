@@ -4,10 +4,10 @@ use warnings;
 
 my @wordlist=map{uc$_}<STDIN>;
 
-print "static int curdlist_count=",scalar @wordlist,";\n";
+print "static const int curdlist_count=",scalar @wordlist,";\n";
 
 foreach my $i (0,1,2){
-	print "static unsigned char curdlist$i\[]={";
+	print "static const unsigned char curdlist$i\[]={";
 	foreach(@wordlist){
 		chomp;
 		my $base26;
