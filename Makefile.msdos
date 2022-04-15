@@ -11,8 +11,10 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) $(obj)
 
-curdle.exe: curdle.c wordlist.h
-	$(CC) $(CFLAGS) -mc -zt10000 $< -fe=$@
+curdle.exe: curdle.c curdlist.h
+	$(CC) $(CFLAGS) $< -fe=$@
+	wdis curdle.o -l=curdle.s
+	@du -b $@
 
 curdle.img: curdle.exe
 	rm $@
