@@ -1,17 +1,17 @@
-CFLAGS=-Wall -Ofast -Wno-array-bounds -Wno-misleading-indentation
+CFLAGS=-std=gnu99 -Wall -Ofast -Wno-array-bounds -Wno-misleading-indentation
 
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-TARGETS=wordlist.h curdle
+TARGETS=curdlist.h curdle
 
 .PHONY: all clean
 all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) $(obj)
 
-curdle: curdle.o wordlist.h
+curdle: curdle.o curdlist.h
 	$(CC) $^ $(LDFLAGS) -o $@
 
-wordlist.h: wordlist.txt list2h.pl
+curdlist.h: wordlist.txt list2h.pl
 	./list2h.pl < $< > $@

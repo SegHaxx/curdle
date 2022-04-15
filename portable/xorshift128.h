@@ -1,10 +1,7 @@
 #include <limits.h>
 
-uint32_t rng_xor128_state[4]={0x2404848,0x4522ed14,0x81300422,0x44ea35b};
-
 // from pg5 of Marsaglia, "Xorshift RNGs"
-static uint32_t rng_xor128_u32(void){
-	uint32_t* state=rng_xor128_state;
+static uint32_t rng_xor128_u32(uint32_t* state){
 	uint32_t t = state[3];
 	uint32_t const s = state[0];
 	state[3] = state[2];
@@ -15,6 +12,8 @@ static uint32_t rng_xor128_u32(void){
 	return state[0] = t ^ s ^ (s >> 19);
 }
 
+uint32_t rng_xor128_state[4]={0xabb41ca8,0x468a5b62,0x89b11400,0x6cb6b5d9};
+
 SHL uint32_t rng_xor128(uint32_t n){
-	return (rng_xor128_u32()-1)/((UINT32_MAX-1)/(n-1));
+	return (rng_xor128_u32(rng_xor128_state)-1)/((UINT32_MAX-1)/(n-1));
 }

@@ -8,35 +8,48 @@ static char banner[]=NL
 #include "portable/input.h"
 #include "portable/xorshift128.h"
 
-#include "wordlist.h"
+#include "curdlist.h"
+
+static void curd_pack(char* word,unsigned char* curd){
+	uint32_t base26=0L;
+	for(int i=0;i<5;++i){
+		base26*=26;base26+=((uint32_t)(word[i]&=0xdf))-'A';}
+	curd[0]=base26>>16;curd[1]=base26>>8;curd[2]=base26;}
+
+static void curd_unpack(const unsigned char* curd,char* word){
+	uint32_t base26=((uint32_t)curd[0]<<16)+
+		((uint32_t)curd[1]<<8)+(uint32_t)curd[2];
+	char* tmp=word+5;do{*--tmp='A'+(base26%26);base26/=26;}
+	while(tmp>word);}
 
 static void word_print(char* p){for(int i=0;i<5;++i)printc(p[i]);}
 
-SHL void wordlist_print(){
-	for(int i=0;i<wordlist_count;++i){
-		word_print(&wordlist[i*5L]);print(NL);}}
+SHL void curdlist_print(){
+	for(int i=0;i<curdlist_count;++i){
+		//word_print(&curdlist[i*5L]);print(NL);
+		}}
 
-static int word_compare(char* a, char* b){
-	for(int i=0;i<5;++i) if((a[i]&=0xdf)!=b[i]) return 1;
+static int curd_compare(unsigned char* a,unsigned char* b){
+	if(a[0]!=b[0]) return 1;if(a[1]!=b[1]) return 1;
+	if(a[2]!=b[2]) return 1;return 0;}
+
+static int curdlist_search(char* guess){
+	unsigned char pguess[3];curd_pack(guess,pguess);
+	for(int i=0;i<curdlist_count;++i){
+		if(!curd_compare(pguess,&curdlist[i*3L])) return 1;}
 	return 0;}
 
-static int wordlist_search(char* guess){
-	for(int i=0;i<wordlist_count;++i)
-		if(!word_compare(guess,&wordlist[i*5L])) return 1;
-	return 0;}
+static void curd_pick(char* word){
+	uint32_t n=rng_xor128(curdlist_count);//n=5847;
+	curd_unpack(&curdlist[n*3L],word);
+	word_print(word);printc(' ');
+	print_u32(n);print(NL NL);}
 
-static char* word_pick(){
-	uint32_t n=rng_xor128(wordlist_count);
-	char* word=&wordlist[n*5L];
-	//word_print(word);printc(' ');
-	//print_u32(n);print(NL NL);
-	return word;}
-
-static void do_wordle(){char* s=word_pick();
+static void do_wordle(){char s[5];curd_pick(s);
 	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';
 	INPUT_T inp;inp.maxlen=5;while(1){input(&inp);
 		if(inp.actuallen<5) continue;char* guess=inp.buffer;
-		if(!wordlist_search(guess)){print(NL "Not in list" NL);continue;}
+		if(!curdlist_search(guess)){print(NL "Not in list" NL);continue;}
 		print(NL);int8_t hint[5];
 		for(int i=0;i<5;++i){int8_t h=0;char g=guess[i];
 			if(g==s[i]){h=2;}else{for(int j=0;j<5;++j)if(g==s[j])h=1;}
@@ -48,4 +61,4 @@ static void do_wordle(){char* s=word_pick();
 	print("Correct!" NL);}
 
 int main(){print(banner);
-	while(1){print(NL "Guess the secret word:" NL);do_wordle();}return 0;}
+	{print(NL "Guess the secret word:" NL);do_wordle();}return 0;}
