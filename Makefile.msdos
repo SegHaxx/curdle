@@ -1,4 +1,4 @@
-CFLAGS=-za99 -oahnxs -ei -zp8 -0 -oe=1000
+CFLAGS=-za99 -oahnxs -ei -zp8 -0 -oe=5
 CC=wcl
 
 src = $(wildcard *.c)
