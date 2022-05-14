@@ -4,6 +4,7 @@
 #ifdef __GNUC__ // shut up gcc
 #define SHL static __attribute__((__unused__))
 #else
+#define __attribute__() /**/
 #define SHL static
 #endif
 
@@ -26,10 +27,16 @@
 #endif
 
 #ifdef __WATCOMC__ // MS-DOS
+#ifdef DOS_USE_GRAPH
+	#include <graph.h>
+	#define print(s) _outtext(s)
+	SHL void printc(char c){_outmem(&c,1);}
+#else
 	#include <conio.h>
-	#define NL "\r\n"
 	#define print(s) cputs(s);
 	#define printc(c) putch(c);
+#endif
+	#define NL "\r\n"
 	#define print_flush() {}
 	#define pause_if_gui() {}
 #endif
@@ -67,6 +74,14 @@ SHL void print_u16(uint16_t n){
 	print(str);
 }
 
+SHL void print_i16(int32_t n){
+	if(n<0){
+		n=-n;
+		printc('-');
+	}
+	print_u16(n);
+}
+
 SHL void div10_rem_u32(uint32_t n, uint32_t* qp, uint32_t* rp){
 	uint32_t q,r;
 	q = (n >> 1) + (n >> 2);
@@ -99,4 +114,21 @@ SHL void print_u32(uint32_t n){
 #endif
 	} while (n > 0);
 	print(str);
+}
+
+SHL void print_i32(int32_t n){
+	if(n<0){
+		n=-n;
+		printc('-');
+	}
+	print_u32(n);
+}
+
+SHL void printi(int n){
+	if(sizeof(int)==sizeof(int16_t)) print_i16(n);
+	if(sizeof(int)==sizeof(int32_t)) print_i32(n);
+}
+
+SHL void printl(long n){
+	if(sizeof(long)==sizeof(int32_t)) print_i32(n);
 }

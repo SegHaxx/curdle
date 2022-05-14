@@ -16,7 +16,7 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) $(obj)
 
-curdle.tos: $(obj)
+curdle.tos: curdle.c
 	$(CC) $(LDFLAGS) $(LINK)
 	$(PREFIX)-objdump -drwC $@ > $@.s
 	$(PREFIX)-strip -s $@
