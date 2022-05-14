@@ -6,6 +6,8 @@ static const char banner[]=NL
 "To become spoiled or transformed into something bad" NL;
 
 #include "portable/input.h"
+#include "portable/date.h"
+#include "portable/timer.h"
 #include "portable/xorshift128.h"
 
 #include "curdlist.h"
@@ -37,7 +39,7 @@ static void curd_pick(char* word){
 	uint32_t n=rng_xor128(curdlist_count);unsigned char curd[3];
 	curd[0]=curdlist0[n];curd[1]=curdlist1[n];curd[2]=curdlist2[n];
 	curd_unpack(curd,word);
-	//print(NL);word_print(word);printc(' ');print_u32(n);print(NL);
+	word_print(word);printc(' ');print_u32(n);print(NL);
 }
 
 static int curdlist_search(char* guess){
@@ -48,12 +50,10 @@ static int curdlist_search(char* guess){
 		if(!curd_compare(pguess,curd)) return 1;}
 	return 0;}
 
-int8_t curd_hint[5];
-
 // check a guess
-static int curd_check(char* guess,char *secret){
+static int curd_check(char* guess,char *secret,int8_t* h){
 	if(!curdlist_search(guess)){
-		for(int i=0;i<5;++i)curd_hint[i]=0;return 2;}
+		for(int i=0;i<5;++i)h[i]=0;return 2;}
 	int win=0;
 	for(int i=0;i<5;++i){
 		int hint=0; // nope
@@ -61,21 +61,54 @@ static int curd_check(char* guess,char *secret){
 		if(g==secret[i])hint=2; // correct
 		else{for(int j=0;j<5;++j) if(g==secret[j])hint=1;} // wrong spot
 		if(hint!=2)win=1;
-		curd_hint[i]=hint;}
+		h[i]=hint;}
 	return win;
 }
 
-static void do_curd(char* s){
-	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';
-	INPUT_T inp;inp.maxlen=5;while(1){input(&inp);
-		if(inp.actuallen<5) continue;char* guess=inp.buffer;
-		int lose=curd_check(guess,s);
-		if(lose==2){print(NL "Not in list" NL);continue;}print(NL);
-		for(int i=0;i<5;++i){int8_t h=curd_hint[i];char g=guess[i];
-			if(h==0)n[(int)g]=g;term_bgcolor(curd_hint[i]);printc(g);}
-		term_bgcolor(0);printc(' ');if(!lose)break;
-		for(int i='A';i<='Z';++i)if(n[i])printc(n[i]);print(NL);}
-	print("Correct!" NL);}
+#define GUESS_MAX 6
 
-int main(){print(banner);while(1){char secret[5];curd_pick(secret);
-	print(NL "Guess the secret word:" NL);do_curd(secret);}return 0;}
+static void do_curd(char* s){print("Guess the secret word:" NL);
+	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';int lose;
+	INPUT_T inp;inp.maxlen=5;int gn=1;while(1){printi(gn);print("? ");
+		input(&inp);if(inp.actuallen<5) continue;char* guess=inp.buffer;
+		int8_t hint[5];lose=curd_check(guess,s,hint);
+		if(lose==2){print(NL "Not in list" NL);continue;}print(NL);++gn;
+		for(int i=0;i<5;++i){int8_t h=hint[i];char g=guess[i];
+			if(h==0)n[(int)g]=g;term_bgcolor(hint[i]);printc(g);}
+		term_bgcolor(0);printc(' ');if(!lose)break;
+		for(int i='A';i<='Z';++i)if(n[i])printc(n[i]);print(NL);
+		if(gn>GUESS_MAX)break;}
+	if(!lose)print("Correct!" NL);}
+
+#if defined(__GNUC__) && defined(__OPTIMIZE_SIZE__)
+__attribute__ ((noinline)) // no gcc don't inline it
+#endif
+static int is_ly(int y){return(!(y%400)||((y%100)&&!(y%4)))?1:0;}
+
+static int date_in_days(int year,int month,int day){int d=-73;
+	for(int y=1981;y<year;++y) d+=365+is_ly(y);if(--month>0) d+=is_ly(year);
+	static char monthadj[12]={0,4,5,7,8,10,11,12,14,15,17,18};
+	d+=month*32-monthadj[month];return d+day-1;}
+
+static void do_daily(){
+	int y,m,d;get_date(&y,&m,&d);print(NL "Today is ");
+	printi(y);printc('-');printi(m);printc('-');printi(d);
+	int curd=date_in_days(y,m,d);
+	print(NL "Daily Curd #");printi(curd);print(NL NL);
+
+	while(0<curd--) rng_xor128_u32(rng_xor128_state);
+	char secret[5];curd_pick(secret);
+
+	do_curd(secret);
+}
+
+static void do_freeplay(){
+	print(NL "Free Play Mode" NL);
+	long time=time_msec();//printl(time);print(NL);
+	rng_xor128_state[3]^=~(uint32_t)time_msec();
+	char secret[5];
+	//for(int i=0;i<10;++i){curd_pick(secret);}
+	while(1){print(NL);curd_pick(secret);do_curd(secret);}}
+
+int main(){print(banner);do_daily();do_freeplay();}
+
