@@ -65,6 +65,11 @@ static int curd_check(char* guess,char *secret,int8_t* h){
 	return win;
 }
 
+static void hint_style(int h){switch(h){
+		default:term_bgcolor(BLACK);term_fgcolor(WHITE);return;
+		case 1:term_bgcolor(YELLOW);break;
+		case 2:term_bgcolor(GREEN);break;}term_fgcolor(BR_WHITE);}
+
 #define GUESS_MAX 6
 
 static void do_curd(char* s){print("Guess the secret word:" NL);
@@ -74,8 +79,8 @@ static void do_curd(char* s){print("Guess the secret word:" NL);
 		int8_t hint[5];lose=curd_check(guess,s,hint);
 		if(lose==2){print(NL "Not in list" NL);continue;}print(NL);++gn;
 		for(int i=0;i<5;++i){int8_t h=hint[i];char g=guess[i];
-			if(h==0)n[(int)g]=g;term_bgcolor(hint[i]);printc(g);}
-		term_bgcolor(0);printc(' ');if(!lose)break;
+			if(h==0)n[(int)g]=g;hint_style(hint[i]);printc(g);}
+		term_nocolor();printc(' ');if(!lose)break;
 		for(int i='A';i<='Z';++i)if(n[i])printc(n[i]);print(NL);
 		if(gn>GUESS_MAX)break;}
 	if(!lose)print("Correct!" NL);}
@@ -111,4 +116,3 @@ static void do_freeplay(){
 	while(1){print(NL);curd_pick(secret);do_curd(secret);}}
 
 int main(){print(banner);do_daily();do_freeplay();}
-
