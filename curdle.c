@@ -39,7 +39,7 @@ static void curd_pick(char* word){
 	uint32_t n=rng_xor128(curdlist_count);unsigned char curd[3];
 	curd[0]=curdlist0[n];curd[1]=curdlist1[n];curd[2]=curdlist2[n];
 	curd_unpack(curd,word);
-	word_print(word);printc(' ');print_u32(n);print(NL);
+	//word_print(word);printc(' ');print_u32(n);print(NL);
 }
 
 static int curdlist_search(char* guess){
@@ -66,24 +66,24 @@ static int curd_check(char* guess,char *secret,int8_t* h){
 }
 
 static void hint_style(int h){switch(h){
-		default:term_bgcolor(BLACK);term_fgcolor(WHITE);return;
+		default:term_bgcolor(BR_BLACK);term_fgcolor(WHITE);return;
 		case 1:term_bgcolor(YELLOW);break;
 		case 2:term_bgcolor(GREEN);break;}term_fgcolor(BR_WHITE);}
 
 #define GUESS_MAX 6
 
-static void do_curd(char* s){print("Guess the secret word:" NL);
+static int do_curd(char* s,int8_t* hint){print("Guess the secret word:" NL);
 	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';int lose;
 	INPUT_T inp;inp.maxlen=5;int gn=1;while(1){printi(gn);print("? ");
 		input(&inp);if(inp.actuallen<5) continue;char* guess=inp.buffer;
-		int8_t hint[5];lose=curd_check(guess,s,hint);
+		lose=curd_check(guess,s,hint);
 		if(lose==2){print(NL "Not in list" NL);continue;}print(NL);++gn;
 		for(int i=0;i<5;++i){int8_t h=hint[i];char g=guess[i];
 			if(h==0)n[(int)g]=g;hint_style(hint[i]);printc(g);}
 		term_nocolor();printc(' ');if(!lose)break;
 		for(int i='A';i<='Z';++i)if(n[i])printc(n[i]);print(NL);
-		if(gn>GUESS_MAX)break;}
-	if(!lose)print("Correct!" NL);}
+		if(gn>GUESS_MAX)break;hint+=5;}
+	if(!lose)print("Correct!" NL);return gn-1;}
 
 #if defined(__GNUC__) && defined(__OPTIMIZE_SIZE__)
 __attribute__ ((noinline)) // no gcc don't inline it
@@ -101,10 +101,26 @@ static void do_daily(){
 	int curd=date_in_days(y,m,d);
 	print(NL "Daily Curd #");printi(curd);print(NL NL);
 
-	while(0<curd--) rng_xor128_u32(rng_xor128_state);
+	for(int i=0;i<curd;++i) rng_xor128_u32(rng_xor128_state);
 	char secret[5];curd_pick(secret);
 
-	do_curd(secret);
+	int8_t hint[5*6];int gn=do_curd(secret,hint);
+
+	print(NL NL " Curdle ");printi(curd);printc(' ');
+	printi(gn);print("/6" NL NL);
+
+	for(int g=0;g<gn;++g){
+		printc(' ');
+		for(int i=0;i<5;++i){
+			term_nocolor();
+			printc(' ');
+			int h=hint[g*5+i];
+			hint_style(h);
+			print("  ");
+		}
+		term_nocolor();
+		print(NL NL);
+	}
 }
 
 static void do_freeplay(){
@@ -113,6 +129,6 @@ static void do_freeplay(){
 	rng_xor128_state[3]^=~(uint32_t)time_msec();
 	char secret[5];
 	//for(int i=0;i<10;++i){curd_pick(secret);}
-	while(1){print(NL);curd_pick(secret);do_curd(secret);}}
+	while(1){print(NL);curd_pick(secret);int8_t h[5*6];do_curd(secret,h);}}
 
 int main(){print(banner);do_daily();do_freeplay();}
