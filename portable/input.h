@@ -17,10 +17,11 @@ SHL void input(INPUT_T* buf){
 	cgets((char*)buf);
 	--buf->maxlen;}
 
-#else // unix?
+#else // POSIX?
 #include <stdio.h>
+#include <stdlib.h>
 SHL void input(INPUT_T* buf){
-	fgets(buf->buffer,255,stdin);
+	if(!fgets(buf->buffer,255,stdin)) exit(1); // just bail if user hits ^D
 	int i=0;
 	for(;i<(int)buf->maxlen;++i){
 		if(buf->buffer[i]==0) break;}
