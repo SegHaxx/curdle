@@ -51,19 +51,10 @@ static int curdlist_search(char* guess){
 	return 0;}
 
 // check a guess
-static int curd_check(char* guess,char *secret,int8_t* h){
-	if(!curdlist_search(guess)){
-		for(int i=0;i<5;++i)h[i]=0;return 2;}
-	int win=0;
-	for(int i=0;i<5;++i){
-		int hint=0; // nope
-		char g=guess[i];
-		if(g==secret[i])hint=2; // correct
-		else{for(int j=0;j<5;++j) if(g==secret[j])hint=1;} // wrong spot
-		if(hint!=2)win=1;
-		h[i]=hint;}
-	return win;
-}
+static int curd_check(char* s,char *g,int8_t* h){
+	if(!curdlist_search(g))return 2;for(int i=0;i<5;++i)h[i]=0;int l=0;
+	for(int i=0;i<5;++i){if(s[i]==g[i]){h[i]=2;continue;}l=1;
+	for(int j=0;j<5;++j)if((s[i]==g[j])&&!h[j]){h[j]=1;break;}}return l;}
 
 static void hint_style(int h){switch(h){
 		default:term_bgcolor(BR_BLACK);term_fgcolor(WHITE);return;
@@ -76,7 +67,7 @@ static int do_curd(char* s,int8_t* hint){print("Guess the secret word:" NL);
 	char nope[1+'Z'-'A']={0};char* n=(char*)&nope;n-='A';int lose;
 	INPUT_T inp;inp.maxlen=5;int gn=1;while(1){printi(gn);print("? ");
 		input(&inp);if(inp.actuallen<5) continue;char* guess=inp.buffer;
-		lose=curd_check(guess,s,hint);
+		lose=curd_check(s,guess,hint);
 		if(lose==2){print(NL "Not in list" NL);continue;}print(NL);++gn;
 		for(int i=0;i<5;++i){int8_t h=hint[i];char g=guess[i];
 			if(h==0)n[(int)g]=g;hint_style(hint[i]);printc(g);}
